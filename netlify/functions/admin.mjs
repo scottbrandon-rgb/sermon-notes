@@ -1,11 +1,16 @@
 // Password-protected publishing API. Every request needs "Authorization: Bearer <ADMIN_PASSWORD>".
 //   GET    /api/admin/session               check the password
+//   GET    /api/admin/series                all series, including ones with no sermons yet
+//   POST   /api/admin/series                { name } create a series
+//   DELETE /api/admin/series/:slug          delete a series that has no sermons
 //   GET    /api/admin/sermons               all sermons, live and scheduled
 //   GET    /api/admin/sermons/:slug         one sermon with markdown (for previewing scheduled ones)
-//   POST   /api/admin/sermons               { markdown, goLive } publish or update
+//   POST   /api/admin/sermons               { markdown, goLive, useSeries? } publish or update
 //   DELETE /api/admin/sermons/:slug         unpublish
-//   POST   /api/admin/series-image          { series, dataUrl } set a series header image
-import { allEntries, isLive, getMarkdown, saveSermon, deleteSermon, saveSeriesImage } from './lib/data.mjs';
+//   POST   /api/admin/series-image          { seriesSlug, dataUrl } set a series header image
+import {
+  overview, getMarkdown, saveSermon, deleteSermon, saveSeriesImage, createSeries, deleteSeries, isLive
+} from './lib/data.mjs';
 import { json, requireAdmin } from './lib/http.mjs';
 import { slugify } from '../../src/lib/parse.js';
 
@@ -24,12 +29,27 @@ export default async (req) => {
   try {
     if (resource === 'session' && req.method === 'GET') return json({ ok: true });
 
+    if (resource === 'series' && !id) {
+      if (req.method === 'GET') return json({ series: (await overview()).series });
+      if (req.method === 'POST') {
+        const body = await req.json().catch(() => ({}));
+        const result = await createSeries(body.name);
+        if (result.error) return json({ error: 'invalid', errors: [result.error] }, result.existing ? 409 : 400);
+        return json({ series: result.series });
+      }
+    }
+    if (resource === 'series' && id && req.method === 'DELETE') {
+      const result = await deleteSeries(decodeURIComponent(id));
+      if (result.error) return json({ error: 'invalid', errors: [result.error] }, 400);
+      return json({ ok: true });
+    }
+
     if (resource === 'sermons') {
       if (req.method === 'GET' && !id) {
-        return json({ sermons: (await allEntries()).map(withStatus) });
+        return json({ sermons: (await overview()).entries.map(withStatus) });
       }
       if (req.method === 'GET' && id) {
-        const entry = (await allEntries()).find((e) => e.slug === decodeURIComponent(id));
+        const entry = (await overview()).entries.find((e) => e.slug === decodeURIComponent(id));
         if (!entry) return json({ error: 'not_found' }, 404);
         return json({ ...withStatus(entry), markdown: await getMarkdown(entry) });
       }
@@ -38,7 +58,15 @@ export default async (req) => {
         const markdown = typeof body.markdown === 'string' ? body.markdown : '';
         if (!markdown.trim()) return json({ error: 'invalid', errors: ['The file is empty.'] }, 400);
         if (markdown.length > MAX_MARKDOWN) return json({ error: 'invalid', errors: ['That file is too large to be sermon notes.'] }, 400);
-        const result = await saveSermon(markdown, body.goLive);
+        const result = await saveSermon(markdown, body.goLive, typeof body.useSeries === 'string' ? body.useSeries : '');
+        if (result.unknownSeries) {
+          return json({
+            error: 'unknown_series',
+            errors: [`There’s no series called “${result.unknownSeries.name}” yet. Create it, or choose an existing series.`],
+            seriesName: result.unknownSeries.name,
+            series: result.series
+          }, 409);
+        }
         if (result.errors) return json({ error: 'invalid', errors: result.errors, warnings: result.warnings }, 400);
         return json({ sermon: withStatus(result.entry), warnings: result.warnings });
       }
@@ -50,9 +78,12 @@ export default async (req) => {
 
     if (resource === 'series-image' && req.method === 'POST') {
       const body = await req.json().catch(() => ({}));
-      const slug = slugify(body.series);
+      const slug = slugify(body.seriesSlug || body.series);
       const m = String(body.dataUrl || '').match(/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/);
-      if (!slug || !m) return json({ error: 'invalid', errors: ['Send a series name and a JPEG, PNG or WebP image.'] }, 400);
+      if (!slug || !m) return json({ error: 'invalid', errors: ['Send a series and a JPEG, PNG or WebP image.'] }, 400);
+      if (!(await overview()).series.some((s) => s.slug === slug)) {
+        return json({ error: 'invalid', errors: ['Create the series first, then add its image.'] }, 404);
+      }
       const bytes = Buffer.from(m[2], 'base64');
       if (bytes.length > MAX_IMAGE) return json({ error: 'invalid', errors: ['That image is too large (3 MB limit).'] }, 400);
       await saveSeriesImage(slug, bytes, m[1]);

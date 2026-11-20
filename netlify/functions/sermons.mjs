@@ -1,9 +1,10 @@
 // Public, read-only. Only sermons whose go-live time has passed are returned.
 //   GET /api/sermons          -> { sermons: [...], current: "2026-11-15" }
-//   GET /api/sermons/current  -> the current sermon, with its markdown
-//   GET /api/sermons/:slug    -> one sermon, with its markdown
-import { allEntries, isLive, getMarkdown } from './lib/data.mjs';
+//   GET /api/sermons/current  -> the current sermon, with its markdown and prev/next
+//   GET /api/sermons/:slug    -> one sermon, with its markdown and prev/next in its series
+import { overview, getMarkdown } from './lib/data.mjs';
 import { json, REVALIDATE } from './lib/http.mjs';
+import { neighbors } from '../../src/lib/series.js';
 
 const pub = ({ source, ...entry }) => entry; // eslint-disable-line no-unused-vars
 
@@ -12,7 +13,7 @@ export default async (req) => {
 
   const rest = new URL(req.url).pathname.replace(/^\/api\/sermons\/?/, '');
   const slug = decodeURIComponent(rest.split('/')[0] || '');
-  const live = (await allEntries()).filter((e) => isLive(e));
+  const { live, series } = await overview();
 
   if (!slug) {
     return json({ sermons: live.map(pub), current: live[0] ? live[0].slug : null }, 200, REVALIDATE);
@@ -22,7 +23,15 @@ export default async (req) => {
   if (!entry) return json({ error: 'not_found' }, 404);
   const markdown = await getMarkdown(entry);
   if (markdown == null) return json({ error: 'not_found' }, 404);
-  return json({ ...pub(entry), markdown, isCurrent: live[0] && live[0].slug === entry.slug }, 200, REVALIDATE);
+
+  const s = series.find((x) => x.slug === entry.seriesSlug);
+  return json({
+    ...pub(entry),
+    seriesName: s ? s.name : entry.series,
+    markdown,
+    isCurrent: live[0] && live[0].slug === entry.slug,
+    nav: neighbors(live, entry.slug)
+  }, 200, REVALIDATE);
 };
 
 export const config = { path: ['/api/sermons', '/api/sermons/*'] };

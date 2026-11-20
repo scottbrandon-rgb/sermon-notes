@@ -22,9 +22,20 @@
   status = 200
 
 [[redirects]]
-  from = "/archive"
+  from = "/sermons"
   to = "/index.html"
   status = 200
+
+[[redirects]]
+  from = "/series/*"
+  to = "/index.html"
+  status = 200
+
+# The first version of the past-sermons page lived at /archive.
+[[redirects]]
+  from = "/archive"
+  to = "/sermons"
+  status = 301
 
 [[redirects]]
   from = "/admin"

@@ -8,18 +8,22 @@ Fill-in-the-blank sermon notes for Harrison Faith Church. People follow along on
 - **Scripture** links go to [ref.ly](https://ref.ly) (Logos/Biblia).
 - **You publish** by uploading a Markdown file at `/admin`.
 
-**Live site:** https://hfc-sermon-notes.netlify.app (Netlify team Harrison Faith Church; deploys automatically from `main`).
+**Live site:** https://notes.harrisonfaith.church (also https://hfc-sermon-notes.netlify.app; Netlify team Harrison Faith Church; deploys automatically from `main`).
+
+## Starting a new series
+
+In `/admin`, open **Series** and press **New series**. Give it a name and, optionally, a 16:9 header image. You can change the image later with **Change image**, and delete a series that has no sermons.
+
+A sermon file names its series in the front matter (`series: Romans`). When you publish, the admin page checks it. If the series doesn't exist yet, it offers **Create "Romans"** or **Use an existing series**, so a typo can't quietly start a new series. Matching ignores capitals and spacing, and the series' saved name is used.
 
 ## Publishing a sermon each week
 
 1. Write the sermon in Obsidian with **Sermon Notes Template** (`_templates`). The file is the "(App Notes)" version.
 2. Fill in the front matter: `series`, `title`, `date`, and optionally `reminder`, `reminder_link`, `reminder_label`.
 3. Go to `/admin`, enter the password, and drop the file in.
-4. Check the preview, choose when it goes live, and press **Publish**.
+4. Check the series, the preview, and when it goes live, then press **Publish**.
 
 By default a sermon goes live at **5:00 AM Central on its date**, so you can upload Thursday and it switches on Sunday morning. Pick **Publish now** to switch immediately. Uploading a file with the same date replaces that sermon.
-
-The first time you use a new series, the admin page lets you upload that series' header image (16:9 works best). It's shared by every sermon in the series.
 
 ### The file format
 
@@ -31,16 +35,17 @@ See the guide block at the top of the template. In short: `# 1. Label: Point wit
 | --- | --- |
 | `/` | The current sermon (the one link to share) |
 | `/sermons/2026-11-15` | A specific sermon, permanent link |
-| `/archive` | Past sermons grouped by series, with the notes this device has |
+| `/sermons` | This week plus every series (the top bar's **Sermons** button goes here) |
+| `/series/church-and-politics` | One series, its sermons newest first, with the notes this device has |
 | `/admin` | Password-protected publishing |
 
-The archive page is built but its link is hidden. Set `SHOW_ARCHIVE_LINK = true` in `src/config.js` when you're ready to share it.
+`/archive` was the first name for the Sermons page and redirects to `/sermons`. Each sermon ends with previous and next links within its series.
 
 ## How it's built
 
 - Static front end: Vite, plain JavaScript, no framework. PDF code (`jspdf`) loads only when someone taps PDF.
-- Netlify Functions in `netlify/functions`: `sermons` (public reads), `admin` (password-protected publishing), `series-image`.
-- Sermons published in `/admin` are stored in **Netlify Blobs**. Sermons in `content/sermons/*.md` ship with the site and are bundled at build time (`scripts/build-seed.mjs`). A published sermon overrides a bundled one with the same date.
+- Netlify Functions in `netlify/functions`: `sermons` and `series` (public reads), `admin` (password-protected publishing), `series-image`.
+- Sermons, series records, and series images published in `/admin` are stored in **Netlify Blobs**. Sermons in `content/sermons/*.md` ship with the site and are bundled at build time (`scripts/build-seed.mjs`). A published sermon overrides a bundled one with the same date.
 - Notes parsing lives in `src/lib/parse.js` and is shared by the page, the admin preview, and the functions.
 
 ## Setup

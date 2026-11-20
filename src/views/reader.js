@@ -1,11 +1,12 @@
 // The page people use on Sunday: fill in blanks, take notes, export.
 import { parseSermon } from '../lib/parse.js';
 import { refHref, refLabel, isScripture } from '../lib/ref.js';
-import { longDate } from '../lib/time.js';
+import { longDate, shortDate } from '../lib/time.js';
 import { exportModel, toText, fileSafe } from '../lib/export.js';
 import { loadNotes, saveNotes, storageAvailable, inAppBrowser } from '../lib/store.js';
 import { esc, icon } from '../lib/html.js';
-import { SHOW_ARCHIVE_LINK, CHURCH_NAME } from '../config.js';
+import { seriesImageHtml, wireImageFallbacks } from '../lib/img.js';
+import { CHURCH_NAME } from '../config.js';
 
 // ---------- checking blanks ----------
 const norm = (x) =>
@@ -129,13 +130,33 @@ export function mountReader(root, sermon, { preview = false } = {}) {
     notices.push(`<div class="notice" data-dismiss role="note"><span>Tip: your notes save in the browser you’re using now. For the most reliable saving, open this page in Safari or Chrome.</span><button type="button" data-action="dismiss">Got it</button></div>`);
   }
 
+  const seriesName = sermon.seriesName || doc.fm.series || '';
+
+  // Previous / next sermon in this series (not shown in the admin preview).
+  const moreCard = (n, dir) => {
+    const label = dir === 'prev' ? 'Previous' : 'Next';
+    return `<a class="more-card${dir === 'next' ? ' right' : ''}" href="/sermons/${esc(n.slug)}" data-link>
+      ${dir === 'prev' ? icon('chevron-left', 18) : ''}
+      <span class="t"><small>${label} · ${esc(shortDate(n.date))}</small><b>${esc(n.title)}</b></span>
+      ${dir === 'next' ? icon('chevron-right', 18) : ''}</a>`;
+  };
+  const nav = sermon.nav || { prev: null, next: null };
+  const moreHtml = preview ? '' : `
+        <nav class="more" aria-label="More from ${esc(seriesName)}">
+          <p class="eyebrow">More from ${esc(seriesName)}</p>
+          ${nav.prev ? moreCard(nav.prev, 'prev') : '<div class="more-card empty"><span class="t"><small>Previous</small><span>This is the first sermon in the series</span></span></div>'}
+          ${nav.next ? moreCard(nav.next, 'next') : '<div class="more-card empty"><span class="t"><small>Next</small><span>You’re on the latest sermon</span></span></div>'}
+          <a class="btn" href="/sermons" data-link>All sermons</a>
+        </nav>`;
+
   root.innerHTML = `
     <div class="page">
-      ${seriesSlug ? `<header><img class="series-img" src="/api/series-image/${esc(seriesSlug)}" data-fallback="/series/${esc(seriesSlug)}.jpg" alt="${esc(doc.fm.series || '')} sermon series"></header>` : ''}
+      ${seriesSlug ? `<header>${seriesImageHtml(seriesSlug, { alt: seriesName + ' sermon series', className: 'series-img' })}</header>` : ''}
       ${notices.join('')}
       <div class="bar">
         <div class="bar-row">
-          <div class="bar-text"><span class="eyebrow">Sermon notes</span><span class="bar-count" data-count></span></div>
+          ${preview ? '' : `<a class="btn secondary small nav-back" href="/sermons" data-link>${icon('chevron-left', 16)}<span>Sermons</span></a>`}
+          <span class="bar-count" data-count></span>
           <button type="button" class="btn export-btn" id="menu-btn" aria-expanded="false" aria-controls="export-menu">${icon('upload')}<span>Export</span></button>
           <div class="menu" id="export-menu" hidden>
             <p class="eyebrow menu-title">Save or send your notes</p>
@@ -151,7 +172,9 @@ export function mountReader(root, sermon, { preview = false } = {}) {
       <main>
         <section class="intro">
           <div class="stack">
-            <p class="eyebrow">${esc(doc.fm.series || '')}</p>
+            ${preview || !seriesSlug
+              ? `<p class="eyebrow">${esc(seriesName)}</p>`
+              : `<a class="eyebrow eyebrow-link" href="/series/${esc(seriesSlug)}" data-link>${esc(seriesName)}${icon('chevron-right', 14)}</a>`}
             <h1 class="title">${esc(doc.title)}</h1>
             <p class="date">${esc(longDate(doc.fm.date))}</p>
           </div>
@@ -177,11 +200,12 @@ export function mountReader(root, sermon, { preview = false } = {}) {
           ${total ? '<button type="button" class="linkish" data-action="fill">Fill in any blanks I missed</button>' : ''}
           <p class="toast" aria-live="polite" data-toast></p>
         </section>
+        ${moreHtml}
       </main>
       <footer class="foot">
         <b>${esc(CHURCH_NAME)}</b>
         <span>Your notes save automatically on this device. To keep them, export them using the options above.</span>
-        ${SHOW_ARCHIVE_LINK && !preview ? '<a href="/archive" data-link>Past sermons</a>' : ''}
+        ${preview ? '' : '<a href="/sermons" data-link>All sermons</a>'}
       </footer>
     </div>`;
 
@@ -199,7 +223,7 @@ export function mountReader(root, sermon, { preview = false } = {}) {
     const pct = total ? Math.round((filled / total) * 100) : 0;
     bar.style.width = pct + '%';
     progress.setAttribute('aria-valuenow', String(filled));
-    count.textContent = total ? `${filled} of ${total} blanks filled` : 'Take notes below';
+    count.textContent = total ? `${filled} of ${total} filled` : 'Take notes below';
     if (!total) progress.hidden = true;
   }
 
@@ -366,14 +390,9 @@ export function mountReader(root, sermon, { preview = false } = {}) {
   document.addEventListener('click', onDocClick);
 
   // Header image: uploaded one first, then the bundled one, then no image at all.
-  const img = $('.series-img');
-  if (img) {
-    img.addEventListener('error', () => {
-      const fb = img.dataset.fallback;
-      if (fb && img.getAttribute('src') !== fb) { img.dataset.fallback = ''; img.setAttribute('src', fb); }
-      else img.closest('header').remove();
-    });
-  }
+  wireImageFallbacks(root, (img) => { const h = img.closest('header'); if (h) h.remove(); });
+  const headerImg = $('.series-img');
+  if (headerImg && headerImg.complete && headerImg.naturalWidth === 0) headerImg.dispatchEvent(new Event('error'));
 
   updateProgress();
   if (!preview) document.title = `${doc.title} · Sermon Notes`;

@@ -143,6 +143,7 @@ export function validateSermon(doc) {
     errors.push('The front matter needs a date written as YYYY-MM-DD (for example 2026-11-22).');
   }
   if (!doc.fm.series) errors.push('The front matter needs a series name.');
+  else if (!slugify(doc.fm.series)) errors.push('The series name needs at least one letter or number.');
   if (!doc.title) errors.push('Add the sermon title as a bold line right after the front matter: **Sermon Title**');
   if (!doc.sections.length) errors.push('No points found. Start each main point with "# 1. ", "# 2. ", and so on.');
   if (!doc.refs.length) warnings.push('No scripture line found. Add an italic line under the title: *Book 1:1-10, Book 2:1-5*');
@@ -156,7 +157,22 @@ export function validateSermon(doc) {
   return { errors, warnings };
 }
 
-/** Small summary used for lists and the archive. */
+/**
+ * Return the markdown with its front matter `series:` set to `name`
+ * (replacing the line, or adding one). Used to file a sermon under an existing series.
+ */
+export function withSeries(md, name) {
+  const clean = String(name).replace(/["\r\n]/g, '').trim();
+  const value = /[:#]/.test(clean) ? `"${clean}"` : clean;
+  const m = String(md).match(/^(﻿?\s*---\r?\n)([\s\S]*?)(\r?\n---)/);
+  if (!m) return md;
+  const body = /^series:.*$/m.test(m[2])
+    ? m[2].replace(/^series:.*$/m, `series: ${value}`)
+    : `${m[2]}\nseries: ${value}`;
+  return m[1] + body + m[3] + String(md).slice(m[0].length);
+}
+
+/** Small summary used for lists and the series pages. */
 export function sermonMeta(doc) {
   return {
     slug: doc.fm.date,

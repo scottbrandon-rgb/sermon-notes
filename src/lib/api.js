@@ -13,6 +13,8 @@ async function request(url, opts = {}) {
 
 export const getSermons = () => request('/api/sermons');
 export const getSermon = (slug) => request('/api/sermons/' + encodeURIComponent(slug || 'current'));
+export const getSeriesList = () => request('/api/series');
+export const getSeries = (slug) => request('/api/series/' + encodeURIComponent(slug));
 
 // ---- admin (password held in sessionStorage for this tab only) ----
 const KEY = 'sn-admin';
@@ -33,6 +35,10 @@ function admin(path, { method = 'GET', body, password } = {}) {
 export const adminCheck = (password) => admin('session', { password });
 export const adminList = () => admin('sermons');
 export const adminGet = (slug) => admin('sermons/' + encodeURIComponent(slug));
-export const adminPublish = (markdown, goLive) => admin('sermons', { method: 'POST', body: { markdown, goLive } });
+export const adminPublish = (markdown, goLive, useSeries) =>
+  admin('sermons', { method: 'POST', body: { markdown, goLive, useSeries: useSeries || undefined } });
 export const adminDelete = (slug) => admin('sermons/' + encodeURIComponent(slug), { method: 'DELETE' });
-export const adminSeriesImage = (series, dataUrl) => admin('series-image', { method: 'POST', body: { series, dataUrl } });
+export const adminSeriesList = () => admin('series');
+export const adminCreateSeries = (name) => admin('series', { method: 'POST', body: { name } });
+export const adminDeleteSeries = (slug) => admin('series/' + encodeURIComponent(slug), { method: 'DELETE' });
+export const adminSeriesImage = (seriesSlug, dataUrl) => admin('series-image', { method: 'POST', body: { seriesSlug, dataUrl } });

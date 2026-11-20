@@ -6,8 +6,15 @@ const app = document.getElementById('app');
 let cleanup = null;
 let renderId = 0;
 
+// Every page gets its own container, so a page's event listeners go away with it.
+function freshRoot() {
+  const el = document.createElement('div');
+  app.replaceChildren(el);
+  return el;
+}
+
 function message(html) {
-  app.innerHTML = `<div class="page"><div class="center-msg">${html}</div></div>`;
+  freshRoot().innerHTML = `<div class="page"><div class="center-msg">${html}</div></div>`;
 }
 
 async function reader(slug) {
@@ -29,11 +36,12 @@ async function reader(slug) {
     return;
   }
   if (id !== renderId) return;
-  cleanup = mountReader(app, sermon);
+  cleanup = mountReader(freshRoot(), sermon);
 }
 
 async function route() {
   renderId++;
+  const id = renderId;
   if (cleanup) { cleanup(); cleanup = null; }
   window.scrollTo(0, 0);
   const path = decodeURIComponent(location.pathname).replace(/\/+$/, '') || '/';
@@ -41,16 +49,25 @@ async function route() {
   if (path === '/') return reader('');
   let m;
   if ((m = path.match(/^\/sermons\/([\w-]+)$/))) return reader(m[1]);
-  if (path === '/archive') {
-    const { mountArchive } = await import('./views/archive.js');
-    const id = renderId;
-    const c = await mountArchive(app);
-    if (id === renderId) cleanup = c;
+  if (path === '/sermons') {
+    const { mountSermons } = await import('./views/sermons.js');
+    if (id !== renderId) return;
+    const c = await mountSermons(freshRoot());
+    if (id === renderId) cleanup = c; else c();
     return;
   }
+  if ((m = path.match(/^\/series\/([\w-]+)$/))) {
+    const { mountSeries } = await import('./views/series.js');
+    if (id !== renderId) return;
+    const c = await mountSeries(freshRoot(), m[1]);
+    if (id === renderId) cleanup = c; else c();
+    return;
+  }
+  if (path === '/archive') { history.replaceState({}, '', '/sermons'); return route(); }
   if (path === '/admin') {
     const { mountAdmin } = await import('./views/admin.js');
-    cleanup = mountAdmin(app);
+    if (id !== renderId) return;
+    cleanup = mountAdmin(freshRoot());
     return;
   }
   document.title = 'Not found · Sermon Notes';
