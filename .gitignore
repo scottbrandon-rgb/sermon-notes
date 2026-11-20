@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.netlify/
+.env
+.env.*
+!.env.example
+.DS_Store
+# Generated from content/sermons/*.md by scripts/build-seed.mjs
+netlify/functions/lib/seed.mjs

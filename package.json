@@ -1,0 +1,25 @@
+{
+  "name": "sermon-notes",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Fill-in-the-blank sermon notes for Harrison Faith Church. One link, always the current sermon.",
+  "type": "module",
+  "scripts": {
+    "seed": "node scripts/build-seed.mjs",
+    "dev": "npm run seed && npx netlify-cli dev",
+    "dev:vite": "vite",
+    "build": "npm run seed && vite build",
+    "preview": "vite preview",
+    "test": "node --test tests/"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^11.1.9",
+    "jspdf": "^4.2.1"
+  },
+  "devDependencies": {
+    "vite": "^8.3.8"
+  }
+}
