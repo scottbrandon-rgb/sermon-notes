@@ -8,6 +8,8 @@ Fill-in-the-blank sermon notes for Harrison Faith Church. People follow along on
 - **Scripture** links go to [ref.ly](https://ref.ly) (Logos/Biblia).
 - **You publish** by uploading a Markdown file at `/admin`.
 
+**Live site:** https://hfc-sermon-notes.netlify.app (Netlify team Harrison Faith Church; deploys automatically from `main`).
+
 ## Publishing a sermon each week
 
 1. Write the sermon in Obsidian with **Sermon Notes Template** (`_templates`). The file is the "(App Notes)" version.
