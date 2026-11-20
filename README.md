@@ -5,7 +5,7 @@ Fill-in-the-blank sermon notes for Harrison Faith Church. People follow along on
 - **One link** (`/`) always shows the current sermon.
 - **Notes stay on the person's phone.** They autosave in the browser (`localStorage`), so closing the tab doesn't lose anything. There are no accounts and no database of attendee notes.
 - **Export:** Share (Messages, Mail, Apple Notes, Keep, and more), Email, Text, Copy, and PDF.
-- **Scripture** links go to [ref.ly](https://ref.ly) (Logos/Biblia).
+- **Scripture** links go to [ref.ly](https://ref.ly) (Logos/Biblia). A scripture block can also carry its passage text, so the verses show on the page (see below).
 - **You publish** by uploading a Markdown file at `/admin`.
 
 **Live site:** https://notes.harrisonfaith.church (also https://hfc-sermon-notes.netlify.app; Netlify team Harrison Faith Church; deploys automatically from `main`).
@@ -27,7 +27,20 @@ By default a sermon goes live at **5:00 AM Central on its date**, so you can upl
 
 ### The file format
 
-See the guide block at the top of the template. In short: `# 1. Label: Point with a __blank__.`, subpoints as `- `, `__word__` for blanks, `(Reference)` at the end of a line for a small citation, `> [!scripture] Romans 1:24-32` for a scripture card, `{note}` at the end of a section for a note box, and a heading with no number (`# Altar`) for a "Respond" section.
+See the guide block at the top of the template. In short: `# 1. Label: Point with a __blank__.`, subpoints as `- `, `__word__` for blanks, `(Reference)` at the end of a line for a small citation, `> [!scripture] Romans 1:24-32` for a scripture card (a link to the passage), `{note}` at the end of a section for a note box, and a heading with no number (`# Altar`) for a "Respond" section.
+
+### Showing the verses
+
+A scripture block with nothing under it is a tap-to-read link. To put the verses on the page, write the passage on the quote lines right under it:
+
+```markdown
+> [!scripture] Romans 1:32
+> Though they know God's righteous decree... they not only do them but give __approval__ to those who practice them.
+```
+
+The card shows the text with the reference linking out, a long passage collapses behind a "Read all" button, bold and italics are kept, and `__blanks__` inside the passage work like any other. The passage is also included when someone exports their notes. The site never fetches passages. Whatever you paste is what shows.
+
+In the Obsidian manuscript, the **Build App Notes** template does this for you: a lowercase `[!bible]` brings only the reference, and a capital `[!Bible]` brings the passage text along too.
 
 ## Routes
 

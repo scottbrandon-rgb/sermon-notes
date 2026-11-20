@@ -86,6 +86,18 @@ export function mountReader(root, sermon, { preview = false } = {}) {
   }
 
   function itemHtml(it) {
+    // A scripture block that carries its passage: the text on the page, the reference links out.
+    if (it.type === 'scripture' && it.text) {
+      const hasBlank = it.tokens.some((t) => t.type === 'blank');
+      const long = it.text.length > 420 && !hasBlank; // a passage with blanks stays fully open
+      return `<li class="scripture"><figure class="passage">
+        <figcaption><a class="passage-ref" href="${esc(refHref(it.ref))}" target="_blank" rel="noopener">
+          <span class="ref">${icon('book', 18)}<span>${esc(refLabel(it.ref))}</span></span>
+          <span class="go">${icon('out', 16)}</span></a></figcaption>
+        <blockquote class="${long ? 'clamp' : ''}">${seg(it.tokens)}</blockquote>
+        ${long ? '<button type="button" class="passage-toggle" data-action="passage" aria-expanded="false">Read all</button>' : ''}
+      </figure></li>`;
+    }
     if (it.type === 'scripture') {
       return `<li class="scripture"><a class="scripture-card" href="${esc(refHref(it.ref))}" target="_blank" rel="noopener">
         <span class="ref">${icon('book', 18)}<span>${esc(refLabel(it.ref))}</span></span>
@@ -396,6 +408,12 @@ export function mountReader(root, sermon, { preview = false } = {}) {
     },
     pdf: savePdf,
     fill: fillRest,
+    passage(btn) {
+      const quote = btn.previousElementSibling;
+      const open = quote.classList.toggle('open');
+      btn.setAttribute('aria-expanded', String(open));
+      btn.textContent = open ? 'Show less' : 'Read all';
+    },
     dismiss(btn) { const n = btn.closest('.notice'); if (n) n.remove(); }
   };
 

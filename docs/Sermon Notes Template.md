@@ -1,7 +1,7 @@
 ---
 type: sermon-resource
 series: Series Name
-title: "Sermon Title (App Notes)"
+title: Sermon Title (App Notes)
 date: YYYY-MM-DD
 reminder:
 reminder_link:
@@ -48,7 +48,12 @@ REFERENCES
 - To keep a parenthetical aside as part of the sentence, add a period after the closing parenthesis.
 
 SCRIPTURE BLOCKS
-- "> [!scripture] Romans 1:24-32" on its own line places a Scripture card at that spot (usually right under a point's heading).
+- "> [!scripture] Romans 1:24-32" on its own line places a Scripture card at that spot (usually right under a point's heading). The card links to the passage.
+- To show the verses on the page instead, put the passage on the quote lines right under it:
+  > [!scripture] Romans 1:32
+  > Though they know God's righteous decree... they not only do them but give approval to those who practice them.
+  Bold and italics stay. A long passage collapses behind a "Read all" button. You can underline a word in it with __ __ like any other line.
+- Build App Notes does this for you: a lowercase [!bible] in the manuscript brings only the reference, a capital [!Bible] brings the passage text too.
 
 NOTE BOXES
 - Keep the image line ending in {note} at the end of each section that should get a note box.

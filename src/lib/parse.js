@@ -78,11 +78,29 @@ export function parseSermon(md) {
     return cur;
   };
 
+  // A scripture block can carry its passage: the quote lines right under "> [!scripture] Ref".
+  let scr = null;
+  const finishScr = () => {
+    if (scr && scr.text) {
+      scr.item.text = scr.text;
+      scr.item.tokens = tokenize(scr.text, blanks); // so the passage can hold bold, italics, and blanks
+    }
+    scr = null;
+  };
+
   body.split('\n').forEach((line) => {
     let t = line.trim();
     if (t.includes('{note}')) {
       if (cur) cur.hasNote = true;
       t = t.replace(/<img[^>]*>/g, '').replace('{note}', '').trim();
+    }
+    if (scr) {
+      if (/^>/.test(t) && !/^>\s*\[!/.test(t)) {
+        const piece = t.replace(/^>\s?/, '').replace(/<[^>]+>/g, '').trim();
+        if (piece) scr.text += (scr.text ? ' ' : '') + piece;
+        return;
+      }
+      finishScr(); // a blank line, a divider, or any other line ends the passage
     }
     if (!t || /^-{3,}$/.test(t)) return;
     let m;
@@ -108,7 +126,9 @@ export function parseSermon(md) {
     }
 
     if ((m = t.match(/^>\s*\[!scripture\]\s*(.+)$/i))) {
-      ensure().items.push({ type: 'scripture', ref: m[1].trim() });
+      const item = { type: 'scripture', ref: m[1].trim(), text: '', tokens: [] };
+      ensure().items.push(item);
+      scr = { item, text: '' };
       return;
     }
     if (/^>/.test(t)) return;
@@ -121,6 +141,7 @@ export function parseSermon(md) {
     item.citeTokens = item.cite ? tokenize(item.cite, []) : []; // citations never hold blanks
     ensure().items.push(item);
   });
+  finishScr();
 
   doc.title = doc.title || cleanTitle(doc.fm.title);
 

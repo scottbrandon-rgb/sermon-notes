@@ -23,7 +23,9 @@ export function exportModel(doc, state) {
       n: sec.n,
       kicker: sec.kicker,
       heading: plain(sec.tokens, state),
-      scriptures: sec.items.filter((i) => i.type === 'scripture').map((i) => refLabel(i.ref)),
+      scriptures: sec.items
+        .filter((i) => i.type === 'scripture')
+        .map((i) => ({ ref: refLabel(i.ref), text: i.tokens && i.tokens.length ? plain(i.tokens, state) : '' })),
       lines: sec.items
         .filter((i) => i.type === 'line')
         .map((i) => ({
@@ -45,7 +47,10 @@ export function toText(model) {
   ];
   model.sections.forEach((s) => {
     L.push(s.isPoint ? `${s.n}. ${s.kicker ? s.kicker + ' ' : ''}${s.heading}` : s.heading.toUpperCase());
-    s.scriptures.forEach((r) => L.push('   ' + r));
+    s.scriptures.forEach((p) => {
+      L.push('   ' + p.ref);
+      if (p.text) L.push('   ' + p.text);
+    });
     s.lines.forEach((l) => L.push('   • ' + l.text + (l.cite ? ` (${l.cite})` : '')));
     if (s.note) L.push('   My notes: ' + s.note);
     L.push('');

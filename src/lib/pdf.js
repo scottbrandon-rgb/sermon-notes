@@ -90,8 +90,9 @@ export function buildPdf(model, image, logo) {
     write(s.heading, { size: 14, font: 'helvetica', style: 'bold', lead: 1.35 });
     y += 6;
 
-    s.scriptures.forEach((r) => {
-      write('Scripture: ' + r, { x: M + 14, width: W - 2 * M - 14, size: 10, font: 'helvetica', style: 'bold', color: MUTED });
+    s.scriptures.forEach((p) => {
+      write('Scripture: ' + p.ref, { x: M + 14, width: W - 2 * M - 14, size: 10, font: 'helvetica', style: 'bold', color: MUTED });
+      if (p.text) write(p.text, { x: M + 14, width: W - 2 * M - 14, size: 11, font: 'times', style: 'italic' });
       y += 3;
     });
     s.lines.forEach((l) => {

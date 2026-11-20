@@ -94,7 +94,7 @@ date: 2026-12-06
 
 - line
 `);
-  assert.deepEqual(doc.sections[0].items[0], { type: 'scripture', ref: 'Romans 1:24-32' });
+  assert.deepEqual(doc.sections[0].items[0], { type: 'scripture', ref: 'Romans 1:24-32', text: '', tokens: [] });
 });
 
 test('reminder comes from front matter', () => {
