@@ -19,9 +19,10 @@ const RULE = [222, 216, 205];
 /**
  * @param model  from exportModel()
  * @param image  optional { dataUrl: 'data:image/jpeg;base64,...', w, h }
+ * @param logo   optional church logo { dataUrl: 'data:image/png;base64,...', w, h } for the footer
  * @returns Blob (application/pdf)
  */
-export function buildPdf(model, image) {
+export function buildPdf(model, image, logo) {
   const pdf = new jsPDF({ unit: 'pt', format: 'letter' });
   const W = pdf.internal.pageSize.getWidth();
   const H = pdf.internal.pageSize.getHeight();
@@ -140,7 +141,12 @@ export function buildPdf(model, image) {
     pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(8.5);
     pdf.setTextColor(...MUTED);
-    pdf.text(pdfSafe(model.church), M, H - 34);
+    if (logo && logo.dataUrl) {
+      const lh = 26;
+      pdf.addImage(logo.dataUrl, 'PNG', M, H - 30 - lh / 2 - 4, Math.round(lh * (logo.w / logo.h)), lh);
+    } else {
+      pdf.text(pdfSafe(model.church), M, H - 34);
+    }
     pdf.text(`${i} of ${pages}`, W - M, H - 34, { align: 'right' });
   }
   return pdf.output('blob');

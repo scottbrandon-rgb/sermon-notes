@@ -203,7 +203,8 @@ export function mountReader(root, sermon, { preview = false } = {}) {
         ${moreHtml}
       </main>
       <footer class="foot">
-        <b>${esc(CHURCH_NAME)}</b>
+        <img class="brand-logo" src="/brand/hf-logo.png" width="104" height="32" alt="${esc(CHURCH_NAME)}">
+        <b class="sr-only">${esc(CHURCH_NAME)}</b>
         <span>Your notes save automatically on this device. To keep them, export them using the options above.</span>
         ${preview ? '' : '<a href="/sermons" data-link>All sermons</a>'}
       </footer>
@@ -325,11 +326,35 @@ export function mountReader(root, sermon, { preview = false } = {}) {
     }
   }
 
+  // The church logo for the PDF footer, or null (the footer then falls back to the name in text).
+  async function logoForPdf() {
+    try {
+      const res = await fetch('/brand/hf-logo.png');
+      if (!res.ok) return null;
+      const blob = await res.blob();
+      const dataUrl = await new Promise((ok, no) => {
+        const r = new FileReader();
+        r.onload = () => ok(r.result);
+        r.onerror = no;
+        r.readAsDataURL(blob);
+      });
+      const size = await new Promise((ok) => {
+        const i = new Image();
+        i.onload = () => ok({ w: i.naturalWidth, h: i.naturalHeight });
+        i.onerror = () => ok(null);
+        i.src = dataUrl;
+      });
+      return size ? { dataUrl, ...size } : null;
+    } catch {
+      return null;
+    }
+  }
+
   async function savePdf() {
     toast('Making your PDF…');
     try {
       const { buildPdf } = await import('../lib/pdf.js');
-      const blob = buildPdf(model(), headerForPdf());
+      const blob = buildPdf(model(), headerForPdf(), await logoForPdf());
       const name = fileSafe(doc.title) + '-notes.pdf';
       const file = new File([blob], name, { type: 'application/pdf' });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {

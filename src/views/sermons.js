@@ -44,7 +44,7 @@ export async function mountSermons(root) {
 
   root.innerHTML = `<div class="page"><div class="plain">
     <div style="display:flex;flex-direction:column;gap:8px">
-      <p class="eyebrow">Harrison Faith Church</p>
+      <img class="brand-logo header" src="/brand/hf-logo.png" width="130" height="40" alt="Harrison Faith Church">
       <h1>Sermons</h1>
       <p style="color:var(--muted)">Your notes are saved on this device. Open any sermon to see them.</p>
     </div>

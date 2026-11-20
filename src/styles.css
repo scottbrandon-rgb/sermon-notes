@@ -207,6 +207,8 @@ h2.point .blank-input { padding: 2px 4px; }
 
 footer.foot { padding: 24px 16px 48px; display: flex; flex-direction: column; gap: 4px; font-size: 13px; line-height: 1.5; color: var(--muted); }
 footer.foot b { font-family: var(--display); font-size: 13px; color: var(--ink); }
+.brand-logo { display: block; align-self: flex-start; height: 32px; width: auto; max-width: 100%; object-fit: contain; margin-bottom: 8px; }
+.brand-logo.header { height: 40px; margin-bottom: 4px; }
 footer.foot a { color: var(--muted); }
 
 /* ---------- series link, previous / next ---------- */
