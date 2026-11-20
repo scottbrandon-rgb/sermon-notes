@@ -206,7 +206,6 @@ export function mountReader(root, sermon, { preview = false } = {}) {
         <img class="brand-logo" src="/brand/hf-logo.png" width="104" height="32" alt="${esc(CHURCH_NAME)}">
         <b class="sr-only">${esc(CHURCH_NAME)}</b>
         <span>Your notes save automatically on this device. To keep them, export them using the options above.</span>
-        ${preview ? '' : '<a href="/sermons" data-link>All sermons</a>'}
       </footer>
     </div>`;
 
